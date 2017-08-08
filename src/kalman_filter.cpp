@@ -8,7 +8,7 @@ KalmanFilter::KalmanFilter() {}
 KalmanFilter::~KalmanFilter() {}
 
 void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
-						MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in) {
+                        MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in) {
   x_ = x_in;
   P_ = P_in;
   F_ = F_in;
@@ -18,64 +18,63 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-	// predict the state
-	x_ = F_ * x_;
-	MatrixXd Ft = F_.transpose();
-	P_ = F_ * P_ * Ft + Q_;
+  // predict the state
+  x_ = F_ * x_;
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-	// update the state
-	VectorXd y = z - H_ * x_;
-	MatrixXd Ht = H_.transpose();
-	MatrixXd S = H_ * P_ * Ht + R_;
-	MatrixXd Si = S.inverse();
-	MatrixXd K = P_ * Ht * Si;
+  // update the state
+  VectorXd y = z - H_ * x_;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K = P_ * Ht * Si;
 
-	// new state
-	x_ = x_ + (K * y);
-	long x_size = x_.size();
-	MatrixXd I = MatrixXd::Identity(x_size, x_size);
-	P_ = (I - K * H_) * P_;
-
+  // new state
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-	// convert state into polar coordinate
-	float rho = sqrt(x_(0) * x_(0) + x_(1) * x_(1));
-	float phi;
-	if (fabs(x_(0)) > 0.001) {
-		phi = atan2(x_(1), x_(0));
-	} else {
-		phi = 0.0;
-	}	
-	float rho_dot;
-	if (fabs(rho) > 0.001) {
-		rho_dot = (x_(0) * x_(2) + x_(1) * x_(3)) / rho;
-	} else {
-		rho_dot = 0.0;
-	}
-	VectorXd z_pred = VectorXd(3);
-	z_pred << rho, phi, rho_dot;
+  // convert state into polar coordinate
+  float rho = sqrt(x_(0) * x_(0) + x_(1) * x_(1));
+  float phi;
+  if (fabs(x_(0)) > 0.001) {
+    phi = atan2(x_(1), x_(0));
+  } else {
+    phi = 0.0;
+  }	
+  float rho_dot;
+  if (fabs(rho) > 0.001) {
+    rho_dot = (x_(0) * x_(2) + x_(1) * x_(3)) / rho;
+  } else {
+    rho_dot = 0.0;
+  }
+  VectorXd z_pred = VectorXd(3);
+  z_pred << rho, phi, rho_dot;
 
-	// prediction error
-	VectorXd y = z - z_pred;
-	// normalizing phi
-	while (y[1] > (2 * M_PI)) {
-		y[1] = y[1]-(2 * M_PI);
-	}
-	while (y[1] < -(M_PI)) {
-		y[1] = y[1] + M_PI;
-	}
+  // prediction error
+  VectorXd y = z - z_pred;
+  // normalizing phi
+  while (y[1] > (2 * M_PI)) {
+    y[1] = y[1]-(2 * M_PI);
+  }
+  while (y[1] < -(M_PI)) {
+    y[1] = y[1] + M_PI;
+  }
 
-	MatrixXd Ht = H_.transpose();
-	MatrixXd S = H_ * P_ * Ht + R_;
-	MatrixXd Si = S.inverse();
-	MatrixXd K = P_ * Ht * Si;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K = P_ * Ht * Si;
 
-	// new state
-	x_ = x_ + (K * y);
-	long x_size = x_.size();
-	MatrixXd I = MatrixXd::Identity(x_size, x_size);
-	P_ = (I - K * H_) * P_;
+  // new state
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
